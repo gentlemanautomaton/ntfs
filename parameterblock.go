@@ -45,6 +45,11 @@ type ParameterBlock struct {
 	Checksum              uint32 // 69:73
 }
 
+// ClusterSize returns the size of an NTFS cluster in bytes.
+func (block *ParameterBlock) ClusterSize() uint64 {
+	return uint64(block.BytesPerSector) * uint64(block.SectorsPerCluster)
+}
+
 // ReadFrom reads 73 bytes of BIOS parameter block data from r into block.
 func (block *ParameterBlock) ReadFrom(r io.Reader) (n int64, err error) {
 	var buf [73]byte

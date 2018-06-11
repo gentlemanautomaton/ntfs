@@ -63,6 +63,7 @@ func main() {
 		vbr := r.BootRecord()
 		fmt.Printf("  BytesPerSector:     %d\n", vbr.BytesPerSector)
 		fmt.Printf("  SectorsPerCluster:  %d\n", vbr.SectorsPerCluster)
+		fmt.Printf("  ClusterSize:        %d\n", vbr.ClusterSize())
 		fmt.Printf("  MediaDescriptor:    %d\n", vbr.MediaDescriptor)
 		fmt.Printf("  TotalSectors:       %d\n", vbr.TotalSectors)
 		fmt.Printf("  MFT:                %d\n", vbr.MFT)
