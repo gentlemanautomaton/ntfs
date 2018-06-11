@@ -8,6 +8,7 @@ import (
 )
 
 // https://en.wikipedia.org/wiki/BIOS_parameter_block#NTFS
+// https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2003/cc781134(v=ws.10)
 
 // ParameterBlockLength is the length of an NTFS parameter block in bytes.
 const ParameterBlockLength = 73
@@ -32,22 +33,40 @@ type ParameterBlock struct {
 	totalLogicalSectorsLarge uint32 // 21:25 reserved
 
 	// NTFS extended parameter block
-	physicalDriveNumber   byte   // 25:26
-	flags                 byte   // 26:27
-	extendedBootSignature byte   // 27:28
-	r1                    byte   // 28:29 (reserved)
-	TotalSectors          uint64 // 29:37 Number of sectors in the volume (one less than partition table entry)
-	MFT                   uint64 // 37:45 Logical cluster offset of $MFT
-	MFTMirror             uint64 // 45:53 Logical cluster offset of $MFT mirror
-	MFTRecordSize         uint32 // 53:57
-	IndexBlockSize        uint32 // 57:61
-	VolumeSerialNumber    uint64 // 61:69
-	Checksum              uint32 // 69:73
+	physicalDriveNumber          byte    // 25:26
+	flags                        byte    // 26:27
+	extendedBootSignature        byte    // 27:28
+	reserved1                    byte    // 28:29 (reserved)
+	TotalSectors                 uint64  // 29:37 Number of sectors in the volume (one less than partition table entry)
+	MFT                          uint64  // 37:45 Logical cluster number of $MFT
+	MFTMirror                    uint64  // 45:53 Logical cluster number of $MFT mirror
+	ClustersPerFileRecordSegment int8    // 53:54 if < 0, MFT record size = 2^n
+	reserved2                    [3]byte // 54:57
+	ClustersPerIndexBlock        int8    // 57:58
+	reserved3                    [3]byte // 58:61
+	VolumeSerialNumber           uint64  // 61:69
+	Checksum                     uint32  // 69:73
 }
 
 // ClusterSize returns the size of an NTFS cluster in bytes.
-func (block *ParameterBlock) ClusterSize() uint64 {
-	return uint64(block.BytesPerSector) * uint64(block.SectorsPerCluster)
+func (block *ParameterBlock) ClusterSize() int {
+	return int(block.BytesPerSector) * int(block.SectorsPerCluster)
+}
+
+// FileRecordSize returns the size of a file record segment in bytes.
+func (block *ParameterBlock) FileRecordSize() int {
+	if block.ClustersPerFileRecordSegment < 0 {
+		return int(1) << uint(-block.ClustersPerFileRecordSegment) // 2^N
+	}
+	return int(block.ClustersPerFileRecordSegment) * block.ClusterSize()
+}
+
+// IndexBlockSize returns the size of an index block in bytes.
+func (block *ParameterBlock) IndexBlockSize() int {
+	if block.ClustersPerIndexBlock < 0 {
+		return int(1) << uint(-block.ClustersPerIndexBlock) // 2^N
+	}
+	return int(block.ClustersPerIndexBlock) * block.ClusterSize()
 }
 
 // ReadFrom reads 73 bytes of BIOS parameter block data from r into block.
@@ -95,12 +114,18 @@ func (block *ParameterBlock) UnmarshalBinary(data []byte) error {
 	block.physicalDriveNumber = data[25]
 	block.flags = data[26]
 	block.extendedBootSignature = data[27]
-	block.r1 = data[28]
+	block.reserved1 = data[28]
 	block.TotalSectors = binary.LittleEndian.Uint64(data[29:37])
 	block.MFT = binary.LittleEndian.Uint64(data[37:45])
 	block.MFTMirror = binary.LittleEndian.Uint64(data[45:53])
-	block.MFTRecordSize = binary.LittleEndian.Uint32(data[53:57])
-	block.IndexBlockSize = binary.LittleEndian.Uint32(data[57:61])
+	block.ClustersPerFileRecordSegment = int8(data[53])
+	block.reserved2[0] = data[54]
+	block.reserved2[1] = data[55]
+	block.reserved2[2] = data[56]
+	block.ClustersPerIndexBlock = int8(data[57])
+	block.reserved3[0] = data[58]
+	block.reserved3[1] = data[59]
+	block.reserved3[2] = data[60]
 	block.VolumeSerialNumber = binary.LittleEndian.Uint64(data[61:69])
 	block.Checksum = binary.LittleEndian.Uint32(data[69:73])
 

@@ -61,16 +61,16 @@ func main() {
 		}
 
 		vbr := r.BootRecord()
-		fmt.Printf("  BytesPerSector:     %d\n", vbr.BytesPerSector)
-		fmt.Printf("  SectorsPerCluster:  %d\n", vbr.SectorsPerCluster)
-		fmt.Printf("  ClusterSize:        %d\n", vbr.ClusterSize())
-		fmt.Printf("  MediaDescriptor:    %d\n", vbr.MediaDescriptor)
-		fmt.Printf("  TotalSectors:       %d\n", vbr.TotalSectors)
-		fmt.Printf("  MFT:                %d\n", vbr.MFT)
-		fmt.Printf("  MFTMirror:          %d\n", vbr.MFTMirror)
-		fmt.Printf("  MFTRecordSize:      %d\n", vbr.MFTRecordSize)
-		fmt.Printf("  IndexBlockSize:     %d\n", vbr.IndexBlockSize)
-		fmt.Printf("  VolumeSerialNumber: %d\n", vbr.VolumeSerialNumber)
-		fmt.Printf("  Checksum:           %d\n", vbr.Checksum)
+		fmt.Printf("  BytesPerSector:               %d\n", vbr.BytesPerSector)
+		fmt.Printf("  SectorsPerCluster:            %d\n", vbr.SectorsPerCluster)
+		fmt.Printf("  ClusterSize:                  %d\n", vbr.ClusterSize())
+		fmt.Printf("  MediaDescriptor:              %d\n", vbr.MediaDescriptor)
+		fmt.Printf("  TotalSectors:                 %d\n", vbr.TotalSectors)
+		fmt.Printf("  MFT:                          %d\n", vbr.MFT)
+		fmt.Printf("  MFTMirror:                    %d\n", vbr.MFTMirror)
+		fmt.Printf("  ClustersPerFileRecordSegment: %-6d (%d bytes)\n", vbr.ClustersPerFileRecordSegment, vbr.FileRecordSize())
+		fmt.Printf("  ClustersPerIndexBlock:        %-6d (%d bytes)\n", vbr.ClustersPerIndexBlock, vbr.IndexBlockSize())
+		fmt.Printf("  VolumeSerialNumber:           %d\n", vbr.VolumeSerialNumber)
+		fmt.Printf("  Checksum:                     %d\n", vbr.Checksum)
 	}
 }
