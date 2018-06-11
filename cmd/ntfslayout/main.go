@@ -53,8 +53,15 @@ func main() {
 			continue
 		}
 
-		f.Seek(int64(part.FirstLBA*table.SectorSize), io.SeekStart)
-		r, err := ntfs.NewReader(f)
+		start := int64(part.FirstLBA * table.SectorSize)
+		end := int64(part.LastLBA*table.SectorSize + table.SectorSize)
+		fmt.Printf("  Partition Start:              %d\n", start)
+		fmt.Printf("  Partition End:                %d\n", end)
+		fmt.Printf("  Partition Size:               %d\n", end-start)
+
+		section := io.NewSectionReader(f, start, end-start)
+
+		r, err := ntfs.NewReader(section)
 		if err != nil {
 			fmt.Printf("  Unable to read basic data volume NTFS volume boot record: %v\n", err)
 			continue
