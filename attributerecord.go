@@ -3,8 +3,12 @@ package ntfs
 import (
 	"encoding/binary"
 
+	"github.com/gentlemanautomaton/ntfs/attrform"
 	"github.com/gentlemanautomaton/ntfs/attrtype"
 )
+
+// https://blogs.technet.microsoft.com/askcore/2009/10/16/the-four-stages-of-ntfs-file-growth/
+// https://blogs.technet.microsoft.com/askcore/2010/08/25/ntfs-file-attributes/
 
 // AttributeRecordHeaderLength is the length of an attribute header in bytes,
 // excluding its resident or non-resident portion.
@@ -17,13 +21,17 @@ const AttributeRecordHeaderLength = 16
 type AttributeRecordHeader struct {
 	TypeCode     attrtype.Code
 	RecordLength uint32
-	FormCode     byte
-	NameLength   byte
+	FormCode     attrform.Code
+	NameLength   uint8
 	NameOffset   uint16
 	Flags        uint16
 	Instance     uint16
-	//Resident     ResidentAttributeRecordHeader    // When in resident form
-	//Nonresident  NonresidentAttributeRecordHeader // When in non-resident form
+}
+
+// Resident returns true if the attribute record header precedes resident
+// attribute data.
+func (header *AttributeRecordHeader) Resident() bool {
+	return header.FormCode == attrform.Resident
 }
 
 // UnmarshalBinary unmarshals the little-endian binary representation
@@ -31,12 +39,21 @@ type AttributeRecordHeader struct {
 //
 // The provided data must be at least 16 bytes long.
 func (header *AttributeRecordHeader) UnmarshalBinary(data []byte) error {
+	/*
+		if len(data) < 4 {
+			return ErrTruncatedData
+		}
+		header.TypeCode = attrtype.Code(binary.LittleEndian.Uint32(data[0:4]))
+		if header.TypeCode == 0xffffffff {
+			return nil
+		}
+	*/
 	if len(data) < AttributeRecordHeaderLength {
 		return ErrTruncatedData
 	}
-	header.TypeCode = attrtype.Code(binary.LittleEndian.Uint32(data[0:4]))
+	header.TypeCode = attrtype.Unmarshal(data[0:4])
 	header.RecordLength = binary.LittleEndian.Uint32(data[4:8])
-	header.FormCode = data[8]
+	header.FormCode = attrform.Code(data[8])
 	header.NameLength = data[9]
 	header.NameOffset = binary.LittleEndian.Uint16(data[10:12])
 	header.Flags = binary.LittleEndian.Uint16(data[12:14])
