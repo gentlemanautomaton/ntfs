@@ -22,6 +22,18 @@ var (
 	// beyond the bounds of its containing record.
 	ErrInvalidUnicode = errors.New("invalid unicode data")
 
+	// ErrAttributeNameOutOfBounds is returned when an attribute name exceeds
+	// the the bounds of its containing record.
+	//
+	// This typically is indicative of MFT corruption.
+	ErrAttributeNameOutOfBounds = errors.New("attribute name data exceeds the bounds of its file record segment")
+
+	// ErrAttributeValueOutOfBounds is returned when an attribute's value
+	// exceeds the bounds of its containing record.
+	//
+	// This typically is indicative of MFT corruption.
+	ErrAttributeValueOutOfBounds = errors.New("attribute value exceeds the bounds of its file record segment")
+
 	// ErrFileNameOutOfBounds is returned when a the value of a file name attribute
 	// exceeds the bounds of its containing record.
 	//
