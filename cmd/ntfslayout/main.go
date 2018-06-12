@@ -79,5 +79,31 @@ func main() {
 		fmt.Printf("  ClustersPerIndexBlock:        %-6d (%d bytes)\n", vbr.ClustersPerIndexBlock, vbr.IndexBlockSize())
 		fmt.Printf("  VolumeSerialNumber:           %d\n", vbr.VolumeSerialNumber)
 		fmt.Printf("  Checksum:                     %d\n", vbr.Checksum)
+
+		mft := ntfs.MFT{
+			SectorSize:  sectorSize,
+			ClusterSize: int64(vbr.ClusterSize()),
+			RecordSize:  int64(vbr.FileRecordSize()),
+			BaseAddr:    int64(vbr.MFT) * int64(vbr.ClusterSize()),
+		}
+
+		// Print information about the first 12 system records
+		for id := int64(0); id < 12; id++ {
+			fmt.Printf("--------\nMFT Record %d\n--------\n", id)
+			file, err := mft.File(section, id)
+			if err != nil {
+				fmt.Printf("%s\n", err)
+				continue
+			}
+
+			for a := range file.Attributes {
+				attr := &file.Attributes[a]
+				value, err := attr.ResidentValueString()
+				if err != nil {
+					value = fmt.Sprintf("unable to parse value: %v", err)
+				}
+				fmt.Printf("Attr %d: %-21s %-11s %-20s %s\n", a, attr.Header.TypeCode, attr.Header.FormCode, attr.Name, value)
+			}
+		}
 	}
 }
