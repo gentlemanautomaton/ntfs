@@ -33,12 +33,20 @@ func (attr *Attribute) ResidentValueString() (string, error) {
 		var oid ObjectID
 		err := oid.UnmarshalBinary(attr.ResidentValue)
 		return oid.String(), err
+	case attrtype.VolumeName:
+		return utf16ToString(attr.ResidentValue)
 	case attrtype.VolumeInformation:
 		var vi VolumeInformation
 		err := vi.UnmarshalBinary(attr.ResidentValue)
 		return vi.String(), err
-	case attrtype.VolumeName:
-		return utf16ToString(attr.ResidentValue)
+	case attrtype.IndexRoot:
+		var ir IndexRoot
+		err := ir.UnmarshalBinary(attr.ResidentValue)
+		return ir.String(), err
+	case attrtype.Bitmap:
+		var b Bitmap
+		err := b.UnmarshalBinary(attr.ResidentValue)
+		return b.String(), err
 	default:
 		return "", nil
 	}
