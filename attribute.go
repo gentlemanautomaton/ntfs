@@ -21,10 +21,18 @@ func (attr *Attribute) ResidentValueString() (string, error) {
 		return "", nil
 	}
 	switch attr.Header.TypeCode {
+	case attrtype.StandardInformation:
+		var si StandardInformation
+		err := si.UnmarshalBinary(attr.ResidentValue)
+		return si.String(), err
 	case attrtype.FileName:
 		var fn FileName
 		err := fn.UnmarshalBinary(attr.ResidentValue)
 		return fn.Value, err
+	case attrtype.ObjectID:
+		var oid ObjectID
+		err := oid.UnmarshalBinary(attr.ResidentValue)
+		return oid.String(), err
 	case attrtype.VolumeInformation:
 		var vi VolumeInformation
 		err := vi.UnmarshalBinary(attr.ResidentValue)
