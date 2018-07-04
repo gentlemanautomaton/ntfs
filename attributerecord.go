@@ -3,12 +3,14 @@ package ntfs
 import (
 	"encoding/binary"
 
+	"github.com/gentlemanautomaton/ntfs/attrflag"
 	"github.com/gentlemanautomaton/ntfs/attrform"
 	"github.com/gentlemanautomaton/ntfs/attrtype"
 )
 
 // https://blogs.technet.microsoft.com/askcore/2009/10/16/the-four-stages-of-ntfs-file-growth/
 // https://blogs.technet.microsoft.com/askcore/2010/08/25/ntfs-file-attributes/
+// https://github.com/Invoke-IR/ForensicPosters
 
 // AttributeRecordHeaderLength is the length of an attribute header in bytes,
 // excluding its resident or non-resident portion.
@@ -20,11 +22,11 @@ const AttributeRecordHeaderLength = 16
 // https://msdn.microsoft.com/library/bb470039
 type AttributeRecordHeader struct {
 	TypeCode     attrtype.Code
-	RecordLength uint32
+	RecordLength uint32 // The length of the attribute header, including its resident or nonresident header
 	FormCode     attrform.Code
 	NameLength   uint8
 	NameOffset   uint16
-	Flags        uint16
+	Flags        attrflag.Flag
 	Instance     uint16
 }
 
@@ -56,7 +58,7 @@ func (header *AttributeRecordHeader) UnmarshalBinary(data []byte) error {
 	header.FormCode = attrform.Code(data[8])
 	header.NameLength = data[9]
 	header.NameOffset = binary.LittleEndian.Uint16(data[10:12])
-	header.Flags = binary.LittleEndian.Uint16(data[12:14])
+	header.Flags = attrflag.Unmarshal(data[12:14])
 	header.Instance = binary.LittleEndian.Uint16(data[14:16])
 	return nil
 }
@@ -98,11 +100,12 @@ type NonresidentAttributeRecordHeader struct {
 	LowestVCN          VCN
 	HighestVCN         VCN
 	MappingPairsOffset uint16
-	reserved           [6]byte
-	AllocatedLength    int64
-	FileSize           int64
-	ValidDataLength    int64
-	TotalAllocated     int64
+	CompressionUnit    uint16
+	reserved           [4]byte // Padding
+	AllocatedLength    int64   // Total bytes allocated
+	DataLength         int64   // Total bytes of actual data (the "file size")
+	InitializedLength  int64   // Total bytes initialized
+	CompressedLength   int64   // Total bytes compressed
 }
 
 // UnmarshalBinary unmarshals the little-endian binary representation
@@ -113,18 +116,17 @@ func (header *NonresidentAttributeRecordHeader) UnmarshalBinary(data []byte) err
 	if len(data) < NonresidentAttributeRecordHeaderLength {
 		return ErrTruncatedData
 	}
-	header.LowestVCN = VCN(binary.LittleEndian.Uint32(data[0:4]))
-	header.HighestVCN = VCN(binary.LittleEndian.Uint32(data[4:8]))
-	header.MappingPairsOffset = binary.LittleEndian.Uint16(data[8:10])
-	header.reserved[0] = data[10]
-	header.reserved[1] = data[11]
-	header.reserved[2] = data[12]
-	header.reserved[3] = data[13]
-	header.reserved[4] = data[14]
-	header.reserved[5] = data[15]
-	header.AllocatedLength = int64(binary.LittleEndian.Uint64(data[16:24]))
-	header.FileSize = int64(binary.LittleEndian.Uint64(data[24:32]))
-	header.ValidDataLength = int64(binary.LittleEndian.Uint64(data[32:40]))
-	header.TotalAllocated = int64(binary.LittleEndian.Uint64(data[40:48]))
+	header.LowestVCN = VCN(binary.LittleEndian.Uint64(data[0:8]))
+	header.HighestVCN = VCN(binary.LittleEndian.Uint64(data[8:16]))
+	header.MappingPairsOffset = binary.LittleEndian.Uint16(data[16:18])
+	header.CompressionUnit = binary.LittleEndian.Uint16(data[18:20])
+	header.reserved[0] = data[20]
+	header.reserved[1] = data[21]
+	header.reserved[2] = data[22]
+	header.reserved[3] = data[23]
+	header.AllocatedLength = int64(binary.LittleEndian.Uint64(data[24:32]))
+	header.DataLength = int64(binary.LittleEndian.Uint64(data[32:40]))
+	header.InitializedLength = int64(binary.LittleEndian.Uint64(data[40:48]))
+	//header.CompressedLength = int64(binary.LittleEndian.Uint64(data[48:56]))
 	return nil
 }
