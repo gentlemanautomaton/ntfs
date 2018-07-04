@@ -10,7 +10,7 @@ const MultiSectorHeaderLength = 8
 //
 // https://msdn.microsoft.com/library/bb470212
 type MultiSectorHeader struct {
-	Signature                 [4]byte // Always "FILE"
+	Signature                 [4]byte // Identifies the type of data, i.e. "FILE" or "INDX"
 	UpdateSequenceArrayOffset uint16
 	UpdateSequenceArraySize   uint16
 }

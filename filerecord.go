@@ -19,7 +19,7 @@ type FileRecordSegmentHeader struct {
 	logFileSequenceNumber uint64 // reserved
 	SequenceNumber        uint16
 	hardLinkCount         uint16 // reserved
-	FirstAttributeOffset  uint16
+	FirstAttributeOffset  uint16 // relative to the start of the header
 	Flags                 uint16
 	actualSize            uint32 // reserved
 	allocatedSize         uint32 // reserved
