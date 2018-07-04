@@ -102,7 +102,7 @@ func main() {
 				if err != nil {
 					value = fmt.Sprintf("unable to parse value: %v", err)
 				}
-				fmt.Printf("Attr %d: %-21s %-11s %-20s %s\n", a, attr.Header.TypeCode, attr.Header.FormCode, attr.Name, value)
+				fmt.Printf("Attr %d: %-21s %-11s %s %-20s %s\n", a, attr.Header.TypeCode, attr.Header.FormCode, attr.Header.Flags.ShortString(), attr.Name, value)
 			}
 		}
 	}
